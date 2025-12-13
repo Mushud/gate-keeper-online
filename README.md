@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GateKeeperPro Online Checkout
 
-## Getting Started
+Professional OTP verification checkout interface built with Next.js 15, TypeScript, Tailwind CSS, Ant Design, and shadcn/ui.
 
-First, run the development server:
+## Quick Start
 
-```bash
+\`\`\`bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+\`\`\`
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit [http://localhost:3001](http://localhost:3001)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- ✅ Secure OTP verification with 3-strike system
+- ✅ Rate limiting (3 OTPs per 5 min per receiver)
+- ✅ Automatic callback redirects on success/failure
+- ✅ Background name resolution
+- ✅ Professional minimal UI with Inter font
+- ✅ Real-time OTP expiration timer
+- ✅ Responsive design
 
-## Learn More
+## Environment Setup
 
-To learn more about Next.js, take a look at the following resources:
+Create `.env.local`:
+\`\`\`
+NEXT_PUBLIC_API_URL=http://localhost:3000
+\`\`\`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## How to Use
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Create checkout session** via API (requires project API key)
+2. **Redirect user** to the checkout URL
+3. **User verifies** phone with OTP
+4. **Handle callback** with verified user data
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See API documentation for details.
