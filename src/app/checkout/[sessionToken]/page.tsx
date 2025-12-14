@@ -18,10 +18,13 @@ export default function CheckoutPage() {
 
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<CheckoutSession | null>(null);
+  const [checkoutType, setCheckoutType] = useState<'standard' | 'direct'>('standard');
   const [step, setStep] = useState<'phone' | 'verify' | 'success'>('phone');
   
-  // Phone input
+  // Phone/Email input
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [contactType, setContactType] = useState<'phone' | 'email'>('phone');
   const [phoneError, setPhoneError] = useState('');
   
   // OTP state
@@ -64,6 +67,21 @@ export default function CheckoutPage() {
       const data = await api.getCheckoutSession(sessionToken);
       setSession(data);
 
+      // Detect checkout type based on session data
+      if (data.phoneNumber || data.email) {
+        // Direct checkout - contact already provided
+        setCheckoutType('direct');
+        setPhoneNumber(data.phoneNumber || '');
+        setEmail(data.email || '');
+        setContactType(data.phoneNumber ? 'phone' : 'email');
+        
+        // Generate fresh OTP to get reference and timer
+        await generateOTPForDirectCheckout(data.phoneNumber, data.email);
+      } else {
+        // Standard checkout - user enters contact
+        setCheckoutType('standard');
+      }
+
       if (data.status === 'completed') {
         setStep('success');
       } else if (data.status === 'expired') {
@@ -80,19 +98,55 @@ export default function CheckoutPage() {
     }
   };
 
+  const generateOTPForDirectCheckout = async (phone?: string, emailAddr?: string) => {
+    try {
+      const data = await api.generateCheckoutOTP(
+        sessionToken,
+        phone || '',
+        emailAddr,
+        6
+      );
+
+      setOtpReference(data.reference);
+      setOtpExpiresAt(new Date(data.expiresAt));
+      setStep('verify');
+      toast.success('OTP sent to ' + (phone || emailAddr));
+    } catch (error) {
+      if (error instanceof APIError) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to send OTP');
+      }
+    }
+  };
+
   const handleGenerateOTP = async () => {
     setPhoneError('');
 
-    if (!phoneNumber.trim()) {
-      setPhoneError('Phone number is required');
-      return;
-    }
+    if (contactType === 'phone') {
+      if (!phoneNumber.trim()) {
+        setPhoneError('Phone number is required');
+        return;
+      }
 
-    // Basic phone validation (Ghana format)
-    const phoneRegex = /^(0|\+?233)?[2-9]\d{8}$/;
-    if (!phoneRegex.test(phoneNumber.replace(/[\s-]/g, ''))) {
-      setPhoneError('Please enter a valid Ghana phone number');
-      return;
+      // Basic phone validation (Ghana format)
+      const phoneRegex = /^(0|\+?233)?[2-9]\d{8}$/;
+      if (!phoneRegex.test(phoneNumber.replace(/[\s-]/g, ''))) {
+        setPhoneError('Please enter a valid Ghana phone number');
+        return;
+      }
+    } else {
+      if (!email.trim()) {
+        setPhoneError('Email address is required');
+        return;
+      }
+
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setPhoneError('Please enter a valid email address');
+        return;
+      }
     }
 
     setGenerating(true);
@@ -100,8 +154,8 @@ export default function CheckoutPage() {
     try {
       const data = await api.generateCheckoutOTP(
         sessionToken,
-        phoneNumber,
-        undefined,
+        contactType === 'phone' ? phoneNumber : '',
+        contactType === 'email' ? email : undefined,
         6
       );
 
@@ -261,22 +315,58 @@ export default function CheckoutPage() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Step 1: Phone Number Input */}
-          {step === 'phone' && (
+          {/* Step 1: Phone/Email Input (Standard Checkout Only) */}
+          {step === 'phone' && checkoutType === 'standard' && (
             <div className="space-y-6">
+              {/* Contact Type Toggle */}
+              <div className="flex gap-2 p-1 bg-zinc-100 rounded-lg">
+                <button
+                  onClick={() => setContactType('phone')}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                    contactType === 'phone'
+                      ? 'bg-white shadow-sm text-zinc-900'
+                      : 'text-zinc-600 hover:text-zinc-900'
+                  }`}
+                >
+                  Phone
+                </button>
+                <button
+                  onClick={() => setContactType('email')}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                    contactType === 'email'
+                      ? 'bg-white shadow-sm text-zinc-900'
+                      : 'text-zinc-600 hover:text-zinc-900'
+                  }`}
+                >
+                  Email
+                </button>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium text-zinc-700">
-                  Phone Number
+                <Label htmlFor="contact" className="text-sm font-medium text-zinc-700">
+                  {contactType === 'phone' ? 'Phone Number' : 'Email Address'}
                 </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="0501234567"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="h-12 text-base border-zinc-300 focus:border-zinc-900 focus:ring-zinc-900"
-                  disabled={generating}
-                />
+                {contactType === 'phone' ? (
+                  <Input
+                    id="contact"
+                    type="tel"
+                    placeholder="0501234567"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="h-12 text-base border-zinc-300 focus:border-zinc-900 focus:ring-zinc-900"
+                    disabled={generating}
+                  />
+                ) : (
+                  <Input
+                    id="contact"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-12 text-base border-zinc-300 focus:border-zinc-900 focus:ring-zinc-900"
+                    disabled={generating}
+                  />
+                )}
                 {phoneError && (
                   <p className="text-sm text-red-600 flex items-center gap-1">
                     <FiAlertCircle className="text-base" />
@@ -301,7 +391,7 @@ export default function CheckoutPage() {
               </Button>
 
               <p className="text-center text-sm text-zinc-500 leading-relaxed">
-                We'll send a 6-digit verification code to your phone
+                We'll send a 6-digit verification code to your {contactType === 'phone' ? 'phone' : 'email'}
               </p>
             </div>
           )}
@@ -310,28 +400,34 @@ export default function CheckoutPage() {
           {step === 'verify' && (
             <div className="space-y-6">
               <div className="text-center space-y-3 pb-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100">
-                  <FiClock className="text-zinc-600" />
-                  <span className="text-sm font-medium text-zinc-900">
-                    {timeRemaining}
-                  </span>
-                </div>
+                {otpExpiresAt && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100">
+                    <FiClock className="text-zinc-600" />
+                    <span className="text-sm font-medium text-zinc-900">
+                      {timeRemaining}
+                    </span>
+                  </div>
+                )}
                 <div className="space-y-1">
                   <p className="text-sm text-zinc-600">
                     Code sent to
                   </p>
-                  <p className="font-semibold text-zinc-900">{phoneNumber}</p>
-                  <button
-                    onClick={() => {
-                      setStep('phone');
-                      setOtpInputs(['', '', '', '', '', '']);
-                      setFailedAttempts(0);
-                      setRemainingTries(3);
-                    }}
-                    className="text-xs text-zinc-600 hover:text-zinc-900 underline"
-                  >
-                    Change number
-                  </button>
+                  <p className="font-semibold text-zinc-900">
+                    {contactType === 'phone' ? phoneNumber : email}
+                  </p>
+                  {checkoutType === 'standard' && (
+                    <button
+                      onClick={() => {
+                        setStep('phone');
+                        setOtpInputs(['', '', '', '', '', '']);
+                        setFailedAttempts(0);
+                        setRemainingTries(3);
+                      }}
+                      className="text-xs text-zinc-600 hover:text-zinc-900 underline"
+                    >
+                      Change {contactType === 'phone' ? 'number' : 'email'}
+                    </button>
+                  )}
                 </div>
               </div>
 
