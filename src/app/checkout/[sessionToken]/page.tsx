@@ -37,6 +37,10 @@ export default function CheckoutPage() {
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [remainingTries, setRemainingTries] = useState(3);
   const [verifiedName, setVerifiedName] = useState<string>('');
+  
+  // Resend OTP throttle state
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const [lastResendTime, setLastResendTime] = useState<number>(0);
 
   useEffect(() => {
     fetchSession();
@@ -61,6 +65,22 @@ export default function CheckoutPage() {
 
     return () => clearInterval(interval);
   }, [otpExpiresAt]);
+
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+
+    const interval = setInterval(() => {
+      setResendCountdown((prev) => {
+        const newCount = Math.max(0, prev - 1);
+        if (newCount === 0) {
+          clearInterval(interval);
+        }
+        return newCount;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [resendCountdown]);
 
   const fetchSession = async () => {
     try {
@@ -109,6 +129,8 @@ export default function CheckoutPage() {
 
       setOtpReference(data.reference);
       setOtpExpiresAt(new Date(data.expiresAt));
+      setResendCountdown(60);
+      setLastResendTime(Date.now());
       setStep('verify');
       toast.success('OTP sent to ' + (phone || emailAddr));
     } catch (error) {
@@ -161,6 +183,8 @@ export default function CheckoutPage() {
 
       setOtpReference(data.reference);
       setOtpExpiresAt(new Date(data.expiresAt));
+      setResendCountdown(60);
+      setLastResendTime(Date.now());
       setStep('verify');
       toast.success('OTP sent successfully!');
     } catch (error) {
@@ -267,6 +291,49 @@ export default function CheckoutPage() {
       }
     } finally {
       setVerifying(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (resendCountdown > 0) {
+      return;
+    }
+
+    setGenerating(true);
+
+    try {
+      const data = await api.generateCheckoutOTP(
+        sessionToken,
+        contactType === 'phone' ? phoneNumber : '',
+        contactType === 'email' ? email : undefined,
+        6
+      );
+
+      setOtpReference(data.reference);
+      setOtpExpiresAt(new Date(data.expiresAt));
+      setOtpInputs(['', '', '', '', '', '']);
+      setResendCountdown(60);
+      setLastResendTime(Date.now());
+      toast.success('OTP resent successfully!');
+      
+      // Focus first OTP input
+      setTimeout(() => {
+        document.getElementById('otp-0')?.focus();
+      }, 100);
+    } catch (error) {
+      if (error instanceof APIError) {
+        if (error.status === 429) {
+          toast.error('Too many requests. Please wait before requesting another OTP.');
+        } else if (error.status === 402) {
+          toast.error('Insufficient balance. Please contact support.');
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.error('Failed to resend OTP');
+      }
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -471,6 +538,26 @@ export default function CheckoutPage() {
                   'Verify Code'
                 )}
               </Button>
+
+              <div className="pt-2">
+                <Button
+                  onClick={handleResendOTP}
+                  disabled={resendCountdown > 0 || generating}
+                  variant="outline"
+                  className="w-full h-12 text-base font-medium transition-all"
+                >
+                  {generating ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
+                      Sending...
+                    </span>
+                  ) : resendCountdown > 0 ? (
+                    `Resend in ${resendCountdown}s`
+                  ) : (
+                    'Resend OTP'
+                  )}
+                </Button>
+              </div>
             </div>
           )}
 
