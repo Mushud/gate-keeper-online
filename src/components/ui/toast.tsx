@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { FiCheckCircle, FiAlertCircle, FiInfo, FiX } from 'react-icons/fi';
+import { CheckmarkCircleIcon, AlertCircleIcon, InformationCircleIcon, Cancel01Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 
 interface Toast {
   id: string;
@@ -49,15 +50,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 : 'bg-blue-50 border-blue-200 text-blue-900'
             }`}
           >
-            {toast.type === 'success' && <FiCheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />}
-            {toast.type === 'error' && <FiAlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />}
-            {toast.type === 'info' && <FiInfo className="w-5 h-5 flex-shrink-0 mt-0.5" />}
+            {toast.type === 'success' && <HugeiconsIcon icon={CheckmarkCircleIcon} size={20} strokeWidth={1.5} className="flex-shrink-0 mt-0.5" />}
+            {toast.type === 'error' && <HugeiconsIcon icon={AlertCircleIcon} size={20} strokeWidth={1.5} className="flex-shrink-0 mt-0.5" />}
+            {toast.type === 'info' && <HugeiconsIcon icon={InformationCircleIcon} size={20} strokeWidth={1.5} className="flex-shrink-0 mt-0.5" />}
             <p className="flex-1 text-sm font-medium">{toast.message}</p>
             <button
               onClick={() => removeToast(toast.id)}
               className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity"
             >
-              <FiX className="w-4 h-4" />
+              <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={1.5} />
             </button>
           </div>
         ))}

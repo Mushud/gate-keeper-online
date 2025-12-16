@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api, APIError, CheckoutSession } from '@/lib/api';
 import { useToast } from '@/components/ui/toast';
-import { FiShield, FiClock, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import { ShieldIcon, Clock01Icon, CheckmarkCircleIcon, AlertCircleIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 
 export default function CheckoutPage() {
   const params = useParams();
@@ -354,7 +355,7 @@ export default function CheckoutPage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-red-600">
-              <FiAlertCircle />
+              <HugeiconsIcon icon={AlertCircleIcon} size={20} strokeWidth={1.5} />
               Session Not Found
             </CardTitle>
             <CardDescription>
@@ -367,12 +368,24 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50 p-4">
-      <Card className="w-full max-w-md shadow-xl border-0">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      {/* Gradient Mesh Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-[10%] left-[5%] w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute top-[20%] right-[10%] w-[28rem] h-[28rem] bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob-reverse animation-delay-2000"></div>
+        <div className="absolute bottom-[15%] left-[15%] w-[30rem] h-[30rem] bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-18 animate-blob animation-delay-4000"></div>
+        <div className="absolute bottom-[10%] right-[8%] w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-16 animate-blob-reverse animation-delay-6000"></div>
+        <div className="absolute top-[50%] left-[40%] w-80 h-80 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-14 animate-blob animation-delay-3000"></div>
+        <div className="absolute bottom-[40%] right-[30%] w-72 h-72 bg-rose-200 rounded-full mix-blend-multiply filter blur-3xl opacity-17 animate-blob-reverse animation-delay-5000"></div>
+        <div className="absolute top-[35%] left-[70%] w-[26rem] h-[26rem] bg-cyan-200 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob animation-delay-7000"></div>
+        <div className="absolute bottom-[55%] left-[25%] w-[22rem] h-[22rem] bg-amber-200 rounded-full mix-blend-multiply filter blur-3xl opacity-16 animate-blob-reverse animation-delay-1000"></div>
+      </div>
+      
+      <Card className="w-full max-w-md shadow-2xl border border-white/20 relative z-10 backdrop-blur-md bg-white/80">
         <CardHeader className="space-y-3 pb-6">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-zinc-900 flex items-center justify-center">
-              <FiShield className="text-white text-2xl" />
+              <HugeiconsIcon icon={ShieldIcon} size={24} strokeWidth={1.5} className="text-white" />
             </div>
             <div className="flex-1">
               <CardTitle className="text-2xl font-bold text-zinc-900">{session.projectName}</CardTitle>
@@ -436,7 +449,7 @@ export default function CheckoutPage() {
                 )}
                 {phoneError && (
                   <p className="text-sm text-red-600 flex items-center gap-1">
-                    <FiAlertCircle className="text-base" />
+                    <HugeiconsIcon icon={AlertCircleIcon} size={16} strokeWidth={1.5} />
                     {phoneError}
                   </p>
                 )}
@@ -469,7 +482,7 @@ export default function CheckoutPage() {
               <div className="text-center space-y-3 pb-2">
                 {otpExpiresAt && (
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100">
-                    <FiClock className="text-zinc-600" />
+                    <HugeiconsIcon icon={Clock01Icon} size={16} strokeWidth={1.5} className="text-zinc-600" />
                     <span className="text-sm font-medium text-zinc-900">
                       {timeRemaining}
                     </span>
@@ -482,6 +495,12 @@ export default function CheckoutPage() {
                   <p className="font-semibold text-zinc-900">
                     {contactType === 'phone' ? phoneNumber : email}
                   </p>
+                  {contactType === 'phone' && (
+                    <p className="text-xs text-zinc-500 mt-2">
+                      You can also retrieve your code by dialing{' '}
+                      <span className="font-semibold text-zinc-900">*713*882#</span>
+                    </p>
+                  )}
                   {checkoutType === 'standard' && (
                     <button
                       onClick={() => {
@@ -500,7 +519,7 @@ export default function CheckoutPage() {
 
               {remainingTries < 3 && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center justify-center gap-2">
-                  <FiAlertCircle className="text-amber-600" />
+                  <HugeiconsIcon icon={AlertCircleIcon} size={16} strokeWidth={1.5} className="text-amber-600" />
                   <p className="text-sm font-medium text-amber-900">
                     {remainingTries} {remainingTries === 1 ? 'attempt' : 'attempts'} remaining
                   </p>
@@ -539,25 +558,27 @@ export default function CheckoutPage() {
                 )}
               </Button>
 
-              <div className="pt-2">
-                <Button
-                  onClick={handleResendOTP}
-                  disabled={resendCountdown > 0 || generating}
-                  variant="outline"
-                  className="w-full h-12 text-base font-medium transition-all"
-                >
-                  {generating ? (
-                    <span className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
-                      Sending...
-                    </span>
-                  ) : resendCountdown > 0 ? (
-                    `Resend in ${resendCountdown}s`
-                  ) : (
-                    'Resend OTP'
-                  )}
-                </Button>
-              </div>
+              {contactType !== 'phone' && (
+                <div className="pt-2">
+                  <Button
+                    onClick={handleResendOTP}
+                    disabled={resendCountdown > 0 || generating}
+                    variant="outline"
+                    className="w-full h-12 text-base font-medium transition-all"
+                  >
+                    {generating ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
+                        Sending...
+                      </span>
+                    ) : resendCountdown > 0 ? (
+                      `Resend in ${resendCountdown}s`
+                    ) : (
+                      'Resend OTP'
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
@@ -565,7 +586,7 @@ export default function CheckoutPage() {
           {step === 'success' && (
             <div className="text-center space-y-6 py-8">
               <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                <FiCheckCircle className="text-green-600 text-5xl" />
+                <HugeiconsIcon icon={CheckmarkCircleIcon} size={48} strokeWidth={1.5} className="text-green-600" />
               </div>
               <div className="space-y-3">
                 <h3 className="text-3xl font-bold text-zinc-900">
@@ -581,7 +602,7 @@ export default function CheckoutPage() {
           {/* Security Badge */}
           <div className="pt-4 border-t border-zinc-200">
             <div className="flex items-center justify-center gap-2 text-xs text-zinc-500">
-              <FiShield />
+              <HugeiconsIcon icon={ShieldIcon} size={12} strokeWidth={1.5} />
               <span>Secured by GateKeeperPro</span>
             </div>
           </div>
