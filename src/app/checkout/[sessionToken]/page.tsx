@@ -143,6 +143,8 @@ export default function CheckoutPage() {
     }
   };
 
+  
+
   const handleGenerateOTP = async () => {
     setPhoneError('');
 
